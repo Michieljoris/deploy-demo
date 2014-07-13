@@ -18,10 +18,13 @@
     "tests"
   ],
   "dependencies": {
+    "logthis": "0.1.7",
     "modernizr": "~2.7.2",
-    "normalize.css": "~3.0.0"
+    "normalize.css": "~3.0.0",
+    "arbor": "*",
+    "jquery": "*"
   },
   "devDependencies": {},
   "private": false,
-  "version": "0.0.1"
+  "version": "0.0.5"
 }
