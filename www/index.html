@@ -21,7 +21,10 @@
     <script src="js/angular-ui-ieshiv.js"></script>
     <![endif]-->						    
 
+<script type="text/javascript" src="denodify.js"></script>
+
 <link rel="stylesheet" type="text/css" href="css/main.css">
+
 <script type='text/javascript'>function cachify(path) { return path; }</script></head>
   <body id="body">
 <!--partial:html/body.html-->
@@ -31,9 +34,30 @@
 
 
 <div id="body--">
-  <canvas id="viewport" width="800" height="600"></canvas>
+  <canvas id="viewport" width="400" height="300"></canvas>
+
+  <div id="demo"> 
+    <p>{{message}}</p> 
+    <input v-model="message"> 
+  </div> 
+  <container>some container</container>
+  
+
+  <script id='template' type='text/ractive'>
+    <p>Hello, {{name}}!</p>
+  </script>
 </div>
-<script type="text/javascript" src="scripts/denodify.js"></script><script type="text/javascript" src="/scripts/modules/main.js?module=0"></script>
+
+<script type="text/javascript" src="scripts/vendor/jquery-1.6.2.js"></script>
+<script type="text/javascript" src="scripts/bower/modernizr/modernizr.js"></script>
+<script type="text/javascript" src="scripts/bower/arbor/lib/arbor.js"></script>
+<script type="text/javascript" src="scripts/bower/logthis/logthis.js"></script>
+<script type="text/javascript" src="scripts/bower/ractive/ractive.js"></script>
+<script type="text/javascript" src="scripts/bower/vue/dist/vue.js"></script>
+<script type="text/javascript" src="scripts/renderer.js"></script>
+<script type="text/javascript" src="scripts/graphics.js"></script>
+<script type="text/javascript" src="scripts/main.js?module=0"></script>
+<script type="text/javascript" src="scripts/start.js"></script>
 </body>
 </html>	
 	 
