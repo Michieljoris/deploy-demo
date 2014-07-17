@@ -1,7 +1,7 @@
 var maxGrouping = 4;
 
 // deploy demo
-var sys = arbor.ParticleSystem(500, 200, 1);
+var sys = arbor.ParticleSystem(900, 900, .2);
 sys.parameters({gravity:true});
 sys.renderer = Renderer("#viewport") ;
 
@@ -54,40 +54,37 @@ buttons.on({
     }
 });
 
-function decideEdge(host, hosts) {
-    var hubs = []; 
-    var nonhubs = hosts.filter(function(h) {
-        if (host.hub) {
-            hubs.push(h);    
-            return false;
-        }
-        return true;
-    }); 
-    while (hubs.length) {
-        if (hubs[0] === host && (nonhubs.length || hubs.length))
-            return null;
-        var maxGrouping = hubs[0].maxGrouping || maxGrouping;
-        var i = 0;
-        while (nonhubs.length && i < maxGrouping) {
-            if (nonhubs[0] === host) return hubs[0];
-            nonhubs.shift();
-            i++;
-        }
-        if (i < maxGrouping) {
-            //run out of nonhubs, however the last hub is not filled up yet!!
-            
-        }
-        hubs.shift();
+var k = 1, p = 1;
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
+
+function decideEdges(host, hosts) {
+    if (hosts === 2) return [];
+    var to = [];
+    var index = host.index;
+    var i = 0;
+    var result = hosts.some(function(h) {
+        i++;
+        return h.index === index;
+    });
+    index = i-1;
+    if (!result) throw Error("Host is not in list of hosts!!!");
+    for (var j = 1; j<=k; j++) {
+        to.push(hosts[(index + j)%hosts.length]); 
     }
-    if (!hubs.length) {
-        //used up all the hubs:
-        
+    
+    if (Math.random() < p) {
+        var r = getRandomInt(hosts.length);
+        // if (r!==index && Math.abs(r-index) > k)  {
+        if (r!==index)  {
+            to.push(hosts[r]);
+        }
     }
-    else {
-         
-        
-    }
-    return null;
+    console.log(i-1);
+    
+    return to;
 }
 
 function setEdges() {
@@ -95,21 +92,23 @@ function setEdges() {
         //Now decide for every host exactly the edge based on the current host
         //list. This is a deterministic algorithm.  Every host knows its own
         //index (tag in serf), and has a (sorted by index) list supplied by serf
-        //of every host and their indices. If a host is a hub (can have more
-        //than one edge) they are tagged as such, and also they then would be
-        //publishing their capacity through a tag.  Every host by default sets
-        //up exactly one edge (except for maybe one), and a path should be
-        //garantueed to exist from any host to any other host.
+        //of every host and their indices.  Every host by default sets up at
+        //least one path, possibly more, depending on the parameters for the
+        //watts-newman small world we want to set up.
         
-        var toHost = decideEdge(host, hosts);
-        if (toHost && toHost.index !== host.to) {
-            host.to = toHost.index;
-            var edges = sys.getEdgesFrom(host.node);
-            edges.forEach(function(edge) {
-                sys.pruneEdge(edge);
-            });
+        var toHosts = decideEdges(host, hosts);
+        var edges = sys.getEdgesFrom(host.node);
+        edges.forEach(function(edge) {
+            sys.pruneEdge(edge);
+        });
+        host.to = [];
+        toHosts.forEach(function(toHost) {
+            // if (host.to.indexOf(host.index) === -1) {
+            host.to.push(toHost.index);
             host.edge = sys.addEdge(host.node, toHost.node );
-        }
+            // }
+            
+        });
     });
     
 }

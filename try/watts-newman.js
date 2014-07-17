@@ -21,7 +21,20 @@
 
 //Following implementation of above algorithm works ok, but is not optimized very well. You could memoize a lot more paths for instance.
 
+//See here for algorithms:http://en.wikipedia.org/wiki/Shortest_path_problem
+
 var g10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
+  [ 1, 1, 1, 1, 0, 0, 0, 0, 0, 1 ],
+  [ 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
+  [ 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
+  [ 0, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
+  [ 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 ],
+  [ 0, 0, 0, 0, 1, 1, 1, 1, 1, 0 ],
+  [ 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 ],
+  [ 1, 0, 0, 0, 0, 0, 1, 1, 1, 1 ],
+  [ 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 ] ];
+
+var gd10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
   [ 1, 1, 1, 1, 0, 0, 0, 0, 0, 1 ],
   [ 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
   [ 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
@@ -82,13 +95,45 @@ var g30 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
   [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1 ],
   [ 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1 ] ];
 
+var gd30 = [ [ 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1 ],
+  [ 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1 ],
+  [ 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, 1, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity ],
+  [ Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, 1, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1 ],
+  [ 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, 1, 1, 1, 1 ],
+  [ 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1 ] ];
+
 var start = (new Date()).getTime();
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
 
 var extraEdges = 0;
-function wnGraph(n, k, p) {
+function wnGraph(n, k, p, block) {
+    extraEdges = 0;
     p = p/100;
     
     function index(i, offset) {
@@ -102,7 +147,7 @@ function wnGraph(n, k, p) {
     for ( var i=0; i<n; i++) {
         edges[i] = [];
         for (var j=0; j<n; j++) {
-            edges[i][j] = i === j ? 1 : 0;
+            edges[i][j] = i === j ? 1 : block;
         }
     } 
     for ( i=0; i<n; i++) {
@@ -111,7 +156,9 @@ function wnGraph(n, k, p) {
             edges[i][index(i,-j)] = 1;
         }
         if (Math.random() < p) {
-            var r = getRandomInt(n);
+            // if (i%2 === 0) {
+            // if (true) {
+                var r = getRandomInt(n);
             if (r!==i && edges[i][r] !== 1 )  {
                 // console.log(i,r);
                 edges[i][r] = 1;
@@ -208,7 +255,7 @@ function initShortestPaths(n) {
 
 
 function analyseWnGraph(d) {
-    var g = wnGraph(d.n, d.k, d.p); 
+    var g = wnGraph(d.n, d.k, d.p, 0); 
     // var g = g10;
     // console.log(g);
     
@@ -266,11 +313,11 @@ function analyseWnGraph(d) {
 // analyseWnGraph({ n:10, k:2, p:20 });
 // analyseWnGraph({ n:20, k:2, p:50 });
 // analyseWnGraph({ n:30, k:2, p:50 });
-analyseWnGraph({ n:50, k:2, p:50 });
-
-var end = (new Date()).getTime();
-console.log((end-start)/1000 + ' seconds') ;
-
+// analyseWnGraph({ n:50, k:2, p:50 });
+// analyseWnGraph({ n:100, k:2, p:50 });
+/*
+  
+  
 //g10
 // Total-connections:  45
 // Range: 1-3
@@ -310,3 +357,249 @@ console.log((end-start)/1000 + ' seconds') ;
 // Distribution:  { '1': '10%', '2': '24%', '3': '42%', '4': '22%', '5': '1%' }
 // Mode:  3
 // 40.591 seconds
+
+//g100
+// Total-connections:  4950
+// Range: 1-7
+// Average: 3.737171717171717
+// Median: 4
+// Distribution:  { '1': 241,
+//   '2': 523,
+//   '3': 1150,
+//   '4': 1661,
+//   '5': 1140,
+//   '6': 227,
+//   '7': 8 }
+// Distribution:  { '1': '5%',
+//   '2': '11%',
+//   '3': '23%',
+//   '4': '34%',
+//   '5': '23%',
+//   '6': '5%',
+//   '7': '0%' }
+// Mode:  4
+// 892.886 seconds
+
+//==============================================================================  
+/*  
+ * dijkstra.js
+ *
+ * Dijkstra's single source shortest path algorithm in JavaScript.
+ *
+ * Cameron McCormack <cam (at) mcc.id.au>
+ *
+ * Permission is hereby granted to use, copy, modify and distribute this
+ * code for any purpose, without fee.
+ *
+ * Initial version: October 21, 2004
+ */
+
+function shortestPathDijkstra(edges, numVertices, startVertex) {
+  var done = new Array(numVertices);
+  done[startVertex] = true;
+  var pathLengths = new Array(numVertices);
+  var predecessors = new Array(numVertices);
+  for (var i = 0; i < numVertices; i++) {
+    pathLengths[i] = edges[startVertex][i];
+    if (edges[startVertex][i] != Infinity) {
+      predecessors[i] = startVertex;
+    }
+  }
+  pathLengths[startVertex] = 0;
+  for (var i = 0; i < numVertices - 1; i++) {
+    var closest = -1;
+    var closestDistance = Infinity;
+    for (var j = 0; j < numVertices; j++) {
+      if (!done[j] && pathLengths[j] < closestDistance) {
+        closestDistance = pathLengths[j];
+        closest = j;
+      }
+    }
+    done[closest] = true;
+    for (var j = 0; j < numVertices; j++) {
+      if (!done[j]) {
+        var possiblyCloserDistance = pathLengths[closest] + edges[closest][j];
+        if (possiblyCloserDistance < pathLengths[j]) {
+          pathLengths[j] = possiblyCloserDistance;
+          predecessors[j] = closest;
+        }
+      }
+    }
+  }
+  return { "startVertex": startVertex,
+           "pathLengths": pathLengths,
+           "predecessors": predecessors };
+}
+
+function constructPath(shortestPathInfo, endVertex) {
+  var path = [];
+  while (endVertex != shortestPathInfo.startVertex) {
+    path.unshift(endVertex);
+    endVertex = shortestPathInfo.predecessors[endVertex];
+  }
+  return path;
+}
+
+function analyseWnGraphDijkstra(d) {
+    var g = wnGraph(d.n, d.k, d.p, Infinity); 
+    // var g = g10;
+    // console.log(g);
+    // g = gd30;
+    console.log("Total-nodes: ", d.n);
+    var edges = d.n * d.k + extraEdges;
+    console.log("Total-edges: ", edges);
+    console.log("Extra-edges: ", extraEdges);
+
+    var res = [];
+    var total = 0;
+    // console.log("From-node:");
+    
+    for (var i = 0; i < g.length; i++) {
+        var dijkstra = shortestPathDijkstra(g, d.n, i);
+        // console.log(dijkstra);
+            
+        process.stdout.write('' + i + '->');
+        for (var j = 0; j < g.length; j++) {
+            if (i === j) continue;
+            // process.stdout.write(' ' + j  + ' ');
+            var sp = constructPath(dijkstra, j);
+            // console.log(sp);
+            var h = sp.length;
+            res.push(h);
+            total += h;
+        }
+        // console.log();
+    }
+
+    res.sort();
+    var range,average,median; 
+    console.log("Total-connections: ", res.length);
+    // console.log(res);
+    range =  res[0] + '-' + res[res.length-1];
+    console.log('Range: ' + range);
+    average = total/res.length;
+    console.log("Average: " + average );
+    median = res[Math.floor((res.length+1)/2)];
+    console.log("Median: " + median);
+    var dist = {};
+    res.forEach(function(h) {
+        dist[h] = dist[h] || 0;
+        dist[h]++;
+    });
+        var max = 0, mode;
+    Object.keys(dist).forEach(function(d) {
+        if (dist[d] > max) {
+            mode = d;
+            max = dist[d];
+        }
+    });
+    console.log("Distribution: ", dist);
+    Object.keys(dist).forEach(function(k) {
+        dist[k] =  Math.round((dist[k]/res.length)*100) + "%";
+    });
+    console.log("Distribution: ", dist);
+    console.log("Mode: ", mode);
+   return {
+       edges: edges,
+       range:range,
+       average:average,
+       median:median,
+       mode:mode
+   };
+}
+
+// analyseWnGraphDijkstra({ n:10, k:2, p:20 });
+// analyseWnGraphDijkstra({ n:20, k:2, p:50 });
+// analyseWnGraphDijkstra({ n:30, k:2, p:50 });
+// analyseWnGraphDijkstra({ n:30, k:2, p:50 });
+// analyseWnGraphDijkstra({ n:100, k:1, p:100 });
+var collate = [];
+for (var k=1; k<5;k++) {
+    for (var p=00; p<=100; p+=10) {
+        var result = analyseWnGraphDijkstra({ n:50, k:k, p:p });
+        result.k = k;
+        result.p = p;
+        collate.push(result);
+    
+    }
+}
+// console.log(collate);
+ var lowest = 100; 
+collate = collate.filter(function(r) {
+    lowest = r.average < lowest ? r.average : lowest;
+    return r.average <= lowest  && r.edges < 300;
+});
+
+console.log("==============================================");
+console.log(collate);
+
+// Example //////////////////////////////////////////////////////////////////
+
+// // The adjacency matrix defining the graph.
+// var _ = Infinity;
+// var e = [
+//   [ _, _, _, _, _, _, _, _, 4, 2, 3 ],
+//   [ _, _, 5, 2, 2, _, _, _, _, _, _ ],
+//   [ _, 5, _, _, _, 1, 4, _, _, _, _ ],
+//   [ _, 2, _, _, 3, 6, _, 3, _, _, _ ],
+//   [ _, 2, _, 3, _, _, _, 4, 3, _, _ ],
+//   [ _, _, 1, 6, _, _, 2, 5, _, _, _ ],
+//   [ _, _, 4, _, _, 2, _, 5, _, _, 3 ],
+//   [ _, _, _, 3, 4, 5, 5, _, 3, 2, 4 ],
+//   [ 4, _, _, _, 3, _, _, 3, _, 3, _ ],
+//   [ 2, _, _, _, _, _, _, 2, 3, _, 3 ],
+//   [ 3, _, _, _, _, _, 3, 4, _, 3, _ ]
+// ];
+
+
+// var e = wnGraph(11,2,50, Infinity); 
+// // var e = gd10;
+// // console.log(e);
+// // Compute the shortest paths from vertex number 1 to each other vertex
+// // in the graph.
+// var shortestPathInfo = shortestPathDijkstra(e, 11, 1);
+
+// // Get the shortest path from vertex 1 to vertex 6.
+// var path1to6 = constructPath(shortestPathInfo, 10);
+
+// console.log(shortestPathInfo);
+// console.log(path1to6);
+
+
+
+
+var end = (new Date()).getTime();
+console.log((end-start)/1000 + ' seconds') ;
+
+
+// analyseWnGraphDijkstra({ n:1000, k:2, p:50 });
+// Range: 1-9
+// Average: 5.743203203203203
+// Median: 6
+// Distribution:  { '1': 5028,
+//   '2': 12898,
+//   '3': 37924,
+//   '4': 98178,
+//   '5': 222058,
+//   '6': 332462,
+//   '7': 232772,
+//   '8': 53538,
+//   '9': 4038,
+//   '10': 104 }
+// Distribution:  { '1': '1%',
+//   '2': '1%',
+//   '3': '4%',
+//   '4': '10%',
+//   '5': '22%',
+//   '6': '33%',
+//   '7': '23%',
+//   '8': '5%',
+//   '9': '0%',
+//   '10': '0%' }
+// Mode:  6
+// { startVertex: 1,
+//   pathLengths: [ 1, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1 ],
+//   predecessors: [ 1, 1, 1, 1, 2, 0, 4, 5, 10, 0, 1 ] }
+// [ 10 ]
+// 79.849 seconds
+
