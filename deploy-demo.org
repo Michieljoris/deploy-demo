@@ -49,3 +49,7 @@ Add this to the post handlers
 After successfull signin $scope.signedIn is the user's email address	
 
 
+
+We are going to need a small world network:
+http://pages.physics.cornell.edu/~myers/teaching/ComputationalMethods/ComputerExercises/SmallWorld/SmallWorld.html
+http://www.scholarpedia.org/article/Small-world_network#newmansirev

@@ -34,18 +34,27 @@
 
 
 <div id="body--">
-  <canvas id="viewport" width="400" height="300"></canvas>
+  <canvas id="viewport" width="1000" height="600"></canvas>
 
-  <div id="demo"> 
-    <p>{{message}}</p> 
-    <input v-model="message"> 
-  </div> 
-  <container>some container</container>
-  
 
-  <script id='template' type='text/ractive'>
-    <p>Hello, {{name}}!</p>
+  <!-- <div id="demo"> -->
+  <!--   <p>{{message}}</p> -->
+  <!--   <input v-model="message"> -->
+  <!-- </div> -->
+  <!-- <container>some container</container> -->
+
+  <div id="buttons"></div>
+
+
+  <script id='buttonsTemplate' type='text/ractive'>
+    <button on-click='addHost'>{{addHost}}</button>
+    <button on-click='addHub'>{{addHub}}</button>
+    <br>
+    {{#hosts:i}}
+    <button id="host{{index}}" class="{{enabled}}" on-click='activate'>{{label}}</button>
+    {{/hosts}}
   </script>
+
 </div>
 
 <script type="text/javascript" src="scripts/vendor/jquery-1.6.2.js"></script>

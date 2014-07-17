@@ -1,63 +1,119 @@
+var maxGrouping = 4;
 
 // deploy demo
-var sys = arbor.ParticleSystem(500, 200, 0.1);
+var sys = arbor.ParticleSystem(500, 200, 1);
 sys.parameters({gravity:true});
 sys.renderer = Renderer("#viewport") ;
 
-var animals = sys.addNode('Animals',{'color':'red','shape':'dot','label':'Animals'});
-var dog = sys.addNode('dog',{'color':'green','shape':'dot','label':'dog'});
-var cat = sys.addNode('cat',{'color':'blue','shape':'dot','label':'cat'});
-// sys.addEdge(animals, dog);
-// sys.addEdge(animals, cat);
+var hosts = [];
 
-// var data = {
-//     nodes:{
-//         animals:{'color':'red','shape':'dot','label':'Animals'},
-//         dog:{'color':'green','shape':'dot','label':'dog'},
-//         cat:{'color':'blue','shape':'dot','label':'cat'}
-//     },
-//     edges:{
-//         animals:{ dog:{}, cat:{} }}
-// };
+var buttons = new Ractive({
+    el: "#buttons",
+    template: "#buttonsTemplate",
+    data: { hosts: hosts,
+            addHost: "New host",
+            addHub: "New hub"
+          }
+});
 
-// sys.graft(data);
 
-setTimeout(function(){
-    // var postLoadData = {
-    //     nodes:{
-    //         joe:{'color':'orange','shape':'dot','label':'joe'},
-    //         fido:{'color':'green','shape':'dot','label':'fido'},
-    //         fluffy:{'color':'blue','shape':'dot','label':'fluffy'}
-    //     },
-    //     edges:{
-    //         dog:{ fido:{} },
-    //         cat:{ fluffy:{} },
-    //         joe:{ fluffy:{},fido:{} }
-    //     }
-    // };
-    // sys.graft(postLoadData);
-    
-    sys.addEdge(animals, dog);
-},3000);
+function addHost(hub) {
+    var index = 0;
+    if (hosts.some(function(h) {
+        return h.index !== index++;
+    })) index--;
+    var host = {
+        index: index,
+        label: "h" + index, 
+        hub: hub,
+        to: "0",
+        node:  sys.addNode("h" + index, {'color': hub ? 'purple': 'green',
+                                         'shape': 'round', //hub ? 'triangle': 'square',
+                                                     'label': "h" + index })
+    };
+    hosts.splice(index, 0, host);
+}
 
-var demo = new Vue({
-    el: '#demo',
-    data: {
-        message: 'Hello Vue.js!'
+
+buttons.on({
+    addHost: function ( event ) {
+            addHost(); 
+            setEdges();
+        },
+    addHub: function ( event ) {
+            addHost(true); 
+            setEdges();
+        },
+    activate: function ( event ) {
+        if (hosts.length > 2) {
+            var host = hosts[event.index.i];
+            hosts.splice(event.index.i, 1);
+            sys.pruneNode(host.node);   
+        }
+        setEdges();
     }
 });
 
-// console.log(demo);
+function decideEdge(host, hosts) {
+    var hubs = []; 
+    var nonhubs = hosts.filter(function(h) {
+        if (host.hub) {
+            hubs.push(h);    
+            return false;
+        }
+        return true;
+    }); 
+    while (hubs.length) {
+        if (hubs[0] === host && (nonhubs.length || hubs.length))
+            return null;
+        var maxGrouping = hubs[0].maxGrouping || maxGrouping;
+        var i = 0;
+        while (nonhubs.length && i < maxGrouping) {
+            if (nonhubs[0] === host) return hubs[0];
+            nonhubs.shift();
+            i++;
+        }
+        if (i < maxGrouping) {
+            //run out of nonhubs, however the last hub is not filled up yet!!
+            
+        }
+        hubs.shift();
+    }
+    if (!hubs.length) {
+        //used up all the hubs:
+        
+    }
+    else {
+         
+        
+    }
+    return null;
+}
 
-window.ractive = new Ractive({
-    // The `el` option can be a node, an ID, or a CSS selector.
-    el: 'container',
+function setEdges() {
+    hosts.forEach(function(host) {
+        //Now decide for every host exactly the edge based on the current host
+        //list. This is a deterministic algorithm.  Every host knows its own
+        //index (tag in serf), and has a (sorted by index) list supplied by serf
+        //of every host and their indices. If a host is a hub (can have more
+        //than one edge) they are tagged as such, and also they then would be
+        //publishing their capacity through a tag.  Every host by default sets
+        //up exactly one edge (except for maybe one), and a path should be
+        //garantueed to exist from any host to any other host.
+        
+        var toHost = decideEdge(host, hosts);
+        if (toHost && toHost.index !== host.to) {
+            host.to = toHost.index;
+            var edges = sys.getEdgesFrom(host.node);
+            edges.forEach(function(edge) {
+                sys.pruneEdge(edge);
+            });
+            host.edge = sys.addEdge(host.node, toHost.node );
+        }
+    });
+    
+}
 
-    // We could pass in a string, but for the sake of convenience
-    // we're passing the ID of the <script> tag above.
-    template: '#template',
-
-    // Here, we're passing in some initial data
-    data: { name: 'world' }
-});
-
+addHost(true);
+addHost();
+setEdges();
