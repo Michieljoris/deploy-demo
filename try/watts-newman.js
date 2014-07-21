@@ -19,8 +19,9 @@
  
 // First create a ring over n nodes. Then each node in the ring is connected with its k nearest neighbors (k-1 neighbors if k is odd). Then shortcuts are created by adding new edges as follows: for each edge u-v in the underlying “n-ring with k nearest neighbors” with probability p add a new edge u-w with randomly-chosen existing node w. In contrast with watts_strogatz_graph(), no edges are removed.
 
-//Following implementation of above algorithm works ok, but is not optimized very well. You could memoize a lot more paths for instance.
+//My version of shortest path is just a dumb depth first search, and slow for big numbers, but with memoization, so after that progress is fast.
 
+//Dijkstra is faster by 100x
 //See here for algorithms:http://en.wikipedia.org/wiki/Shortest_path_problem
 
 var g10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
@@ -34,16 +35,16 @@ var g10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
   [ 1, 0, 0, 0, 0, 0, 1, 1, 1, 1 ],
   [ 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 ] ];
 
-var gd10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
-  [ 1, 1, 1, 1, 0, 0, 0, 0, 0, 1 ],
-  [ 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
-  [ 0, 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
-  [ 0, 0, 1, 1, 1, 1, 1, 0, 0, 0 ],
-  [ 0, 0, 0, 1, 1, 1, 1, 1, 0, 0 ],
-  [ 0, 0, 0, 0, 1, 1, 1, 1, 1, 0 ],
-  [ 0, 0, 0, 0, 0, 1, 1, 1, 1, 1 ],
-  [ 1, 0, 0, 0, 0, 0, 1, 1, 1, 1 ],
-  [ 1, 1, 0, 0, 0, 0, 0, 1, 1, 1 ] ];
+var gd10 = [ [ 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1 ],
+  [ 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, 1 ],
+  [ 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1, Infinity ],
+  [ Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1, 1 ],
+  [ 1, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1, 1 ],
+  [ 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1 ] ];
 var g20 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1 ],
   [ 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ],
   [ 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -126,7 +127,6 @@ var gd30 = [ [ 1, 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infini
   [ 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, Infinity, Infinity, Infinity, 1, 1, 1, 1 ],
   [ 1, 1, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, Infinity, 1, 1, 1 ] ];
 
-var start = (new Date()).getTime();
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
@@ -171,46 +171,62 @@ function wnGraph(n, k, p, block) {
     
 }
 
-function copy(a) {
-    return a.map(function(e) {
-        return e;
-    });
-}
-
-function leastHops(g, n1, n2) {
-    if (sPaths[n1][n2]) return sPaths[n1][n2];
-    var n = g.length;
-    var maxHops = 1000;
-    function min(a,b) {
-        return a<b ? a : b;
+function leastHops(edges, start, dest) {
+    // console.log('--------------Finding least hops from ' + start + ' to ' +  dest);
+    var shortestPath; 
+    if (sPaths[start][dest]) return sPaths[start][dest];
+    var n = edges.length;
+    var maxNodes = 1000;
+    
+    function updateShortestPath(path) {
+        // console.log('>>>>>Found path:', path);
+        if (path.length < maxNodes) {
+            shortestPath = path.slice();
+            maxNodes = path.length;
+            // console.log('maxNodes is now ', maxNodes);
+        }
     }
     
-    var shortestPath = [];
-    function hops(n1, n2, h) {
-        if (Math.random() < .000001) {
-            process.stdout.write('+');   
-        }
-        if (g[n1[n1.length-1]][n2]) {
-            if (h<maxHops) {
-                maxHops = h;
-                shortestPath = copy(n1);
-                shortestPath.push(n2);
+    function pursue(path) {
+        var from = path[path.length-1];
+        // console.log('pursuing ', path, '(maxNodes = ', maxNodes , ')');
+        loop:
+        for (var to=0; to<n; to++) {
+            
+            if (path.length + 1 >= maxNodes) {
+                // console.log('not bothering, never going to beat ', maxNodes);
+                break loop;   
             }
-        }
-        else if (h < maxHops) {
-            for (var i=0; i<n; i++) {
-                if (g[n1[n1.length-1]][i]) {
-                    n1.push(i);
-                    //pursue path
-                    hops(n1, n2, h + 1);
-                    n1.pop(i);
+            // console.log('path + to=', path, to);
+            //if there is an edge, and we haven't been there yet:
+            if (edges[from][to] && path.indexOf(to) === -1) {
+                // console.log('trying: ', path.concat([to]));
+                if (to === dest) {
+                    updateShortestPath(path.concat([to]));
+                    break loop;
+                } else {
+                    var sPath = sPaths[to][dest];
+                    if (sPath) {
+                        // console.log('found earlier sPath');
+                        updateShortestPath(path.concat(sPath));
+                    } else {
+                        
+                        path.push(to);
+                        // console.log("trying path ", path);
+                        pursue(path, dest);
+                        path.pop(to);
+                    }
+                    
                 }
             }
         }
+        // if (Math.random() < .000001) {
+        //     process.stdout.write('+');   
+        // }
     };
     
-    
-    hops([n1], n2, 1);
+    pursue([start], dest);
+    if (!shortestPath) throw Error('Oops, there\'s no path from ' + start + ' to ' + dest);
     memoize(shortestPath);
     return shortestPath;
 }
@@ -250,13 +266,12 @@ function initShortestPaths(n) {
         //     p[i][j] = 
         // }
     }
-    
 }
 
 
 function analyseWnGraph(d) {
-    var g = wnGraph(d.n, d.k, d.p, 0); 
-    // var g = g10;
+    // var g = g20; d.n =20;
+    // var g = g30; d.n =30;
     // console.log(g);
     
     console.log("Total-nodes: ", d.n);
@@ -268,20 +283,26 @@ function analyseWnGraph(d) {
     initShortestPaths(d.n);
     console.log("From-node:");
     
-    for (var i = 0; i < g.length-1; i++) {
+    // var shortestPath= leastHops(g, 0, 5);
+    // console.log(shortestPath);
+    // return;
+    for (var i = 0; i < graph.length; i++) {
+        // for (var i = 0; i < 2; i++) {
         process.stdout.write('' + i + '->');
-        for (var j = i+1; j < g.length; j++) {
-            process.stdout.write(' ' + j + ' ');
+        for (var j = i+1; j < graph.length; j++) {
+            // process.stdout.write(' ' + j + ' ');
             // if (i === j) continue;
-            var shortestPath= leastHops(g, i, j);
+                var shortestPath= leastHops(graph, i, j);
             // console.log(shortestPath);
             var h = shortestPath.length-1;
             res.push(h);
             total += h;
         }
-        console.log();
+        // console.log();
     }
 
+    console.log();
+    // console.log(sPaths);
     res.sort();
     
     console.log("Total-connections: ", res.length);
@@ -289,7 +310,7 @@ function analyseWnGraph(d) {
     console.log('Range: ' + res[0] + '-' + res[res.length-1]);
     console.log("Average: " + total/res.length);
     console.log("Median: " + res[Math.floor((res.length+1)/2)] );
-    var dist = {};
+        var dist = {};
     res.forEach(function(h) {
         dist[h] = dist[h] || 0;
         dist[h]++;
@@ -441,8 +462,9 @@ function constructPath(shortestPathInfo, endVertex) {
 }
 
 function analyseWnGraphDijkstra(d) {
-    var g = wnGraph(d.n, d.k, d.p, Infinity); 
-    // var g = g10;
+    // var dGraph = wnGraph(d.n, d.k, d.p, Infinity); 
+    // var g = gd10; d.n = 10;
+    // var g = gd30; d.n = 30;
     // console.log(g);
     // g = gd30;
     console.log("Total-nodes: ", d.n);
@@ -454,15 +476,16 @@ function analyseWnGraphDijkstra(d) {
     var total = 0;
     // console.log("From-node:");
     
-    for (var i = 0; i < g.length; i++) {
-        var dijkstra = shortestPathDijkstra(g, d.n, i);
+    for (var i = 0; i < dGraph.length; i++) {
+        var dijkstra = shortestPathDijkstra(dGraph, d.n, i);
         // console.log(dijkstra);
             
         process.stdout.write('' + i + '->');
-        for (var j = 0; j < g.length; j++) {
+        for (var j = i+1; j < dGraph.length; j++) {
             if (i === j) continue;
             // process.stdout.write(' ' + j  + ' ');
             var sp = constructPath(dijkstra, j);
+            sp = [i].concat(sp);
             // console.log(sp);
             var h = sp.length;
             res.push(h);
@@ -508,30 +531,59 @@ function analyseWnGraphDijkstra(d) {
    };
 }
 
+var d = { n: 200, k: 2, p: 50 };
+var graph = wnGraph(d.n, d.k, d.p, 0); 
+var dGraph = (function() {
+    var result = [];
+    graph.forEach(function(r) {
+        var row = [];
+        r.forEach(function(e) {
+            row.push(e ? 1 : Infinity);
+        });
+        result.push(row);
+    });
+    return result;
+})();
+// var dGraph = wnGraph(d.n, d.k, d.p, Infinity); 
+// console.log(graph);
+// console.log(dGraph);
+var start = (new Date()).getTime();
+
 // analyseWnGraphDijkstra({ n:10, k:2, p:20 });
 // analyseWnGraphDijkstra({ n:20, k:2, p:50 });
 // analyseWnGraphDijkstra({ n:30, k:2, p:50 });
 // analyseWnGraphDijkstra({ n:30, k:2, p:50 });
-// analyseWnGraphDijkstra({ n:100, k:1, p:100 });
-var collate = [];
-for (var k=1; k<5;k++) {
-    for (var p=00; p<=100; p+=10) {
-        var result = analyseWnGraphDijkstra({ n:50, k:k, p:p });
-        result.k = k;
-        result.p = p;
-        collate.push(result);
-    
-    }
-}
-// console.log(collate);
- var lowest = 100; 
-collate = collate.filter(function(r) {
-    lowest = r.average < lowest ? r.average : lowest;
-    return r.average <= lowest  && r.edges < 300;
-});
+console.log("DIJKSTRA");
+analyseWnGraphDijkstra(d);
+var end = (new Date()).getTime();
+console.log((end-start)/1000 + ' seconds') ;
 
-console.log("==============================================");
-console.log(collate);
+
+console.log("MINE");
+start = (new Date()).getTime();
+
+analyseWnGraph(d);
+end = (new Date()).getTime();
+console.log((end-start)/1000 + ' seconds') ;
+// var collate = [];
+// for (var k=1; k<5;k++) {
+//     for (var p=00; p<=100; p+=10) {
+//         var result = analyseWnGraphDijkstra({ n:50, k:k, p:p });
+//         result.k = k;
+//         result.p = p;
+//         collate.push(result);
+    
+//     }
+// }
+// // console.log(collate);
+//  var lowest = 100; 
+// collate = collate.filter(function(r) {
+//     lowest = r.average < lowest ? r.average : lowest;
+//     return r.average <= lowest  && r.edges < 300;
+// });
+
+// console.log("==============================================");
+// console.log(collate);
 
 // Example //////////////////////////////////////////////////////////////////
 
@@ -553,23 +605,18 @@ console.log(collate);
 
 
 // var e = wnGraph(11,2,50, Infinity); 
-// // var e = gd10;
-// // console.log(e);
-// // Compute the shortest paths from vertex number 1 to each other vertex
+// var e = gd10;
+// console.log(e);
+// // Compute the shortest paths from vertex number 0 to each other vertex
 // // in the graph.
-// var shortestPathInfo = shortestPathDijkstra(e, 11, 1);
+// var shortestPathInfo = shortestPathDijkstra(e, 10, 0);
 
 // // Get the shortest path from vertex 1 to vertex 6.
-// var path1to6 = constructPath(shortestPathInfo, 10);
+// var path1to6 = constructPath(shortestPathInfo, 1);
 
 // console.log(shortestPathInfo);
 // console.log(path1to6);
 
-
-
-
-var end = (new Date()).getTime();
-console.log((end-start)/1000 + ' seconds') ;
 
 
 // analyseWnGraphDijkstra({ n:1000, k:2, p:50 });
