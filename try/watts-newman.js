@@ -19,9 +19,9 @@
  
 // First create a ring over n nodes. Then each node in the ring is connected with its k nearest neighbors (k-1 neighbors if k is odd). Then shortcuts are created by adding new edges as follows: for each edge u-v in the underlying “n-ring with k nearest neighbors” with probability p add a new edge u-w with randomly-chosen existing node w. In contrast with watts_strogatz_graph(), no edges are removed.
 
-//My version of shortest path is just a dumb depth first search, and slow for big numbers, but with memoization, so after that progress is fast.
+//My version of shortest path is just a dumb depth breadth search, and slow for big numbers, but with memoization, so after that progress is fast.
 
-//Dijkstra is faster by 100x
+//Dijkstra is faster by 30x when n=200
 //See here for algorithms:http://en.wikipedia.org/wiki/Shortest_path_problem
 
 var g10 = [ [ 1, 1, 1, 0, 0, 0, 0, 0, 1, 1 ],
@@ -225,7 +225,56 @@ function leastHops(edges, start, dest) {
         // }
     };
     
-    pursue([start], dest);
+    function collect(from, unvisited) {
+        var explore = [];
+        unvisited.forEach(function(node) {
+            if (edges[from][node]) {
+                backtrack[node] = from;
+                explore.push(node);   
+                delete unvisited[node];
+            }
+        });
+        return explore;
+    }
+    
+    var unvisited = [];
+    for (var i = 0; i< n; i++) unvisited[i] = i;
+    
+    var explore = [start];
+    delete unvisited[start];
+    var nextHop;
+    
+    var backtrack = [];
+    var isDone;
+    while (!isDone) {
+        nextHop = [];
+        isDone = explore.some(function(node) {
+            // console.log('node', node);
+            if (edges[node][dest]) {
+                // console.log(node, dest);
+                backtrack[dest] = node;
+                return true; //we're there  
+            }
+            nextHop = nextHop.concat(collect(node, unvisited));
+            return false;
+        });
+        explore = nextHop;
+    }
+    // console.log("Found shortest path", backtrack);
+    // pursue([start], dest);
+    shortestPath = (function() {
+        var node = dest;
+        if (typeof backtrack[node] === undefined) throw Error('Oh oh');
+        var result = [];
+        do {
+            result.unshift(node);
+            // console.log(result);
+            node = backtrack[node];
+        } while (node !== start) ;
+        result.unshift(node);
+        return result;
+    })();
+    // console.log(shortestPath);
     if (!shortestPath) throw Error('Oops, there\'s no path from ' + start + ' to ' + dest);
     memoize(shortestPath);
     return shortestPath;
@@ -270,7 +319,7 @@ function initShortestPaths(n) {
 
 
 function analyseWnGraph(d) {
-    // var g = g20; d.n =20;
+    // graph = g10; d.n =10;
     // var g = g30; d.n =30;
     // console.log(g);
     
@@ -287,14 +336,14 @@ function analyseWnGraph(d) {
     // console.log(shortestPath);
     // return;
     for (var i = 0; i < graph.length; i++) {
-        // for (var i = 0; i < 2; i++) {
+        // for (var i = 1; i < 2; i++) {
         process.stdout.write('' + i + '->');
         for (var j = i+1; j < graph.length; j++) {
             // process.stdout.write(' ' + j + ' ');
             // if (i === j) continue;
                 var shortestPath= leastHops(graph, i, j);
-            // console.log(shortestPath);
-            var h = shortestPath.length-1;
+            // console.log('in analyse', shortestPath);
+            var h = shortestPath.length;
             res.push(h);
             total += h;
         }
@@ -547,23 +596,24 @@ var dGraph = (function() {
 // var dGraph = wnGraph(d.n, d.k, d.p, Infinity); 
 // console.log(graph);
 // console.log(dGraph);
-var start = (new Date()).getTime();
 
 // analyseWnGraphDijkstra({ n:10, k:2, p:20 });
 // analyseWnGraphDijkstra({ n:20, k:2, p:50 });
 // analyseWnGraphDijkstra({ n:30, k:2, p:50 });
 // analyseWnGraphDijkstra({ n:30, k:2, p:50 });
-console.log("DIJKSTRA");
-analyseWnGraphDijkstra(d);
-var end = (new Date()).getTime();
-console.log((end-start)/1000 + ' seconds') ;
 
 
 console.log("MINE");
-start = (new Date()).getTime();
+var start = (new Date()).getTime();
 
 analyseWnGraph(d);
-end = (new Date()).getTime();
+var end = (new Date()).getTime();
+console.log((end-start)/1000 + ' seconds') ;
+
+console.log("DIJKSTRA");
+var start = (new Date()).getTime();
+analyseWnGraphDijkstra(d);
+var end = (new Date()).getTime();
 console.log((end-start)/1000 + ' seconds') ;
 // var collate = [];
 // for (var k=1; k<5;k++) {
