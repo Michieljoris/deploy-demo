@@ -511,7 +511,7 @@ function constructPath(shortestPathInfo, endVertex) {
 }
 
 function analyseWnGraphDijkstra(d) {
-    // var dGraph = wnGraph(d.n, d.k, d.p, Infinity); 
+    var dGraph = wnGraph(d.n, d.k, d.p, Infinity); 
     // var g = gd10; d.n = 10;
     // var g = gd30; d.n = 30;
     // console.log(g);
@@ -580,7 +580,7 @@ function analyseWnGraphDijkstra(d) {
    };
 }
 
-var d = { n: 200, k: 2, p: 50 };
+var d = { n: 20, k: 1, p: 20 };
 var graph = wnGraph(d.n, d.k, d.p, 0); 
 var dGraph = (function() {
     var result = [];
@@ -603,12 +603,12 @@ var dGraph = (function() {
 // analyseWnGraphDijkstra({ n:30, k:2, p:50 });
 
 
-console.log("MINE");
-var start = (new Date()).getTime();
+// console.log("MI+ NE");
+// var start = (new Date()).getTime();
 
-analyseWnGraph(d);
-var end = (new Date()).getTime();
-console.log((end-start)/1000 + ' seconds') ;
+// analyseWnGraph(d);
+// var end = (new Date()).getTime();
+// console.log((end-start)/1000 + ' seconds') ;
 
 console.log("DIJKSTRA");
 var start = (new Date()).getTime();

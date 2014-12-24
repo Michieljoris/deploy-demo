@@ -44,7 +44,7 @@ buttons.on({
             addHost(true); 
             setEdges();
         },
-    activate: function ( event ) {
+   activate: function ( event ) {
         if (hosts.length > 2) {
             var host = hosts[event.index.i];
             hosts.splice(event.index.i, 1);
@@ -54,7 +54,7 @@ buttons.on({
     }
 });
 
-var k = 1, p = 1;
+var k = 1, p = 0.8;
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * max);

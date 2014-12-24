@@ -49,11 +49,13 @@
         var data = m[index].d;
         if (data) return data.exports;
         var func = m[index].f;
-        if (!func) error('load', m[index].route);
+        // if (!func) error('load', m[index].route);
+        if (!func) error('load', m[index].filename);
         func(
             function(moduleid) { //require
                 var requiredIndex = m[index].resolve[moduleid];
-                if (!requiredIndex) error('resolve', moduleid, m[index].filename);
+                if (typeof requiredIndex === "undefined")
+                    error('resolve', moduleid, m[index].filename);
                 return require(requiredIndex);
             },
             data = m[index].d = { exports: {} }, //module
@@ -72,7 +74,7 @@
     //Registers module with denodify on script load.
     global.denodify = function (func, index) { 
         var module = m[index];
-        if (!module) error('incomplete', index);
+        if (typeof module === "undefined") error('incomplete', index);
         m[index].f = func;
     };
     
@@ -102,7 +104,7 @@
 //module info
     var m = {
 	"0": {
-		"filename": "scripts/main.js",
+		"filename": "/scripts/main.js",
 		"resolve": {}
 	}
 };
